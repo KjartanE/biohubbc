@@ -124,7 +124,8 @@ export function getSurveyForView(): RequestHandler {
         ...SurveySpeciesData
       });
 
-      const getSurveyProprietorData = new GetSurveyProprietorData(surveyProprietorData);
+      const getSurveyProprietorData =
+        (surveyProprietorData && new GetSurveyProprietorData(surveyProprietorData)) || null;
 
       const result = {
         survey_details: getSurveyData,
@@ -200,10 +201,6 @@ export const getSurveyProprietorDataForView = async (surveyId: number, connectio
   }
 
   const response = await connection.query(sqlStatement.text, sqlStatement.values);
-
-  if (!response || !response?.rows?.[0]) {
-    throw new HTTP400('Failed to get survey proprietor data');
-  }
 
   return (response && response.rows?.[0]) || null;
 };

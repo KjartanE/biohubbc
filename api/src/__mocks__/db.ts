@@ -1,3 +1,4 @@
+import sinon from 'sinon';
 import { IDBConnection } from '../database/db';
 
 /**
@@ -28,4 +29,26 @@ export const getMockDBConnection = (config?: Partial<IDBConnection>): IDBConnect
     },
     ...config
   };
+};
+
+/**
+ * Returns several mocks for testing RequestHandler responses.
+ *
+ * @return {*}
+ */
+export const getMockResponse = () => {
+  const mockSend = sinon.fake();
+  const mockJson = sinon.fake();
+  const mockStatus = sinon.fake(() => {
+    return {
+      send: mockSend,
+      json: mockJson
+    };
+  });
+
+  const mockRes = {
+    status: mockStatus
+  };
+
+  return { mockRes, mockStatus, mockSend, mockJson };
 };

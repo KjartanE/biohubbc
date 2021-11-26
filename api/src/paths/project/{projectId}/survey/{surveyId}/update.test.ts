@@ -2,26 +2,24 @@ import chai, { expect } from 'chai';
 import { describe } from 'mocha';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
-import * as update from './update';
-import * as create from '../create';
-import * as db from '../../../../../database/db';
-import * as survey_view_update_queries from '../../../../../queries/survey/survey-view-update-queries';
-import * as survey_create_queries from '../../../../../queries/survey/survey-create-queries';
-import * as survey_update_queries from '../../../../../queries/survey/survey-update-queries';
-import * as survey_delete_queries from '../../../../../queries/survey/survey-delete-queries';
 import SQL from 'sql-template-strings';
 import { COMPLETION_STATUS } from '../../../../../constants/status';
-import { getMockDBConnection } from '../../../../../__mocks__/db';
+import * as db from '../../../../../database/db';
 import { CustomError } from '../../../../../errors/CustomError';
+import * as survey_create_queries from '../../../../../queries/survey/survey-create-queries';
+import * as survey_delete_queries from '../../../../../queries/survey/survey-delete-queries';
+import * as survey_update_queries from '../../../../../queries/survey/survey-update-queries';
+import * as survey_view_update_queries from '../../../../../queries/survey/survey-view-update-queries';
+import { getMockDBConnection, getMockResponse } from '../../../../../__mocks__/db';
+import * as create from '../create';
+import * as update from './update';
 
 chai.use(sinonChai);
 
-describe('getSurveyForUpdate', () => {
+describe.only('getSurveyForUpdate', () => {
   afterEach(() => {
     sinon.restore();
   });
-
-  const dbConnectionObj = getMockDBConnection();
 
   const sampleReq = {
     keycloak_token: {},
@@ -47,6 +45,8 @@ describe('getSurveyForUpdate', () => {
   };
 
   it('should throw a 400 error when no survey id path param', async () => {
+    const dbConnectionObj = getMockDBConnection();
+
     sinon.stub(db, 'getDBConnection').returns({
       ...dbConnectionObj,
       systemUserId: () => {
@@ -70,6 +70,8 @@ describe('getSurveyForUpdate', () => {
   });
 
   it('should throw a 400 error when no get survey sql statement produced', async () => {
+    const dbConnectionObj = getMockDBConnection();
+
     sinon.stub(db, 'getDBConnection').returns({
       ...dbConnectionObj,
       systemUserId: () => {
@@ -91,12 +93,14 @@ describe('getSurveyForUpdate', () => {
   });
 
   it('should return only survey details when entity specified with survey_details, on success', async () => {
+    const dbConnectionObj = getMockDBConnection();
+
     const survey_details = {
       id: 1,
       name: 'name',
       objectives: 'objective',
-      focal_species: 1,
-      ancillary_species: 3,
+      focal_species: [1],
+      ancillary_species: [3],
       common_survey_methodology_id: 1,
       start_date: '2020/04/04',
       end_date: '2020/05/05',
@@ -108,7 +112,7 @@ describe('getSurveyForUpdate', () => {
       publish_timestamp: null,
       number: '123',
       type: 'scientific',
-      pfs_id: 1
+      pfs_id: [1]
     };
 
     const mockQuery = sinon.stub();
@@ -137,8 +141,8 @@ describe('getSurveyForUpdate', () => {
         id: 1,
         survey_name: survey_details.name,
         survey_purpose: survey_details.objectives,
-        focal_species: [survey_details.focal_species],
-        ancillary_species: [survey_details.ancillary_species],
+        focal_species: survey_details.focal_species,
+        ancillary_species: survey_details.ancillary_species,
         common_survey_methodology_id: survey_details.common_survey_methodology_id,
         start_date: survey_details.start_date,
         end_date: survey_details.end_date,
@@ -151,13 +155,15 @@ describe('getSurveyForUpdate', () => {
         permit_type: survey_details.type,
         completion_status: COMPLETION_STATUS.COMPLETED,
         publish_date: '',
-        funding_sources: [1]
+        funding_sources: survey_details.pfs_id
       },
       survey_proprietor: null
     });
   });
 
   it('should return survey proprietor info when only survey proprietor entity is specified, on success', async () => {
+    const dbConnectionObj = getMockDBConnection();
+
     const survey_proprietor = {
       category_rationale: '',
       data_sharing_agreement_required: 'false',
@@ -212,7 +218,11 @@ describe('getSurveyForUpdate', () => {
     });
   });
 
-  it('should return survey details and proprietor info when no entity is specified, on success', async () => {
+  it.only('should return survey details and proprietor info when no entity is specified, on success', async () => {
+    const dbConnectionObj = getMockDBConnection();
+
+    const { mockRes, mockSend } = getMockResponse();
+
     const survey_details = {
       id: 1,
       name: 'name',
@@ -269,9 +279,9 @@ describe('getSurveyForUpdate', () => {
 
     const result = update.getSurveyForUpdate();
 
-    await result(sampleReq, sampleRes as any, (null as unknown) as any);
+    await result(sampleReq, mockRes as any, (null as unknown) as any);
 
-    expect(actualResult).to.eql({
+    expect(mockSend).to.have.been.calledWith({
       survey_details: {
         id: 1,
         survey_name: survey_details.name,

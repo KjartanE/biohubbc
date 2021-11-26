@@ -27,7 +27,7 @@ export class GetViewSurveyDetailsData {
   revision_count: number;
   permit_number: string;
   permit_type: string;
-  funding_sources: any[];
+  funding_sources: object[];
   completion_status: string;
   publish_date: string;
   occurrence_submission_id: number;
